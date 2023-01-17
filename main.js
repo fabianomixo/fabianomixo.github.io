@@ -97,7 +97,7 @@ function AddLight(scene){
         fog: false,
         depthWrite: false,
         });
-        scene.background = texture;
+        //scene.background = texture;
         scene.environment = texture;
     }); 
 }
