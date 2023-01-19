@@ -5,7 +5,7 @@ import {loadGLTF} from "./libs/loader.js";
 import { Vector3 } from './libs/three.js-r132/build/three.module.js';
 import {ARButton} from '../../libs/three.js-r132/examples/jsm/webxr/ARButton.js';
 import { RGBELoader } from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
-
+//
 const trans = [0.01,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
 let arvore;
 let loaded = 0;
