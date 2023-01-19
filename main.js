@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await new Promise(resolve => setTimeout(resolve, 15));
             if (i==43) i = 100;
         }
-        await LoadModel('./static/TreeV03/Tree.v03.gltf',trans);
+        await LoadModel('./static/TreeV03/TreeV03_Single.gltf',trans);
         // scene.add(arvore);
 
         for (let i = 43; i<100; i++){
@@ -100,5 +100,7 @@ function AddLight(scene){
         //scene.background = texture;
         scene.environment = texture;
     }); 
+    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    scene.add( directionalLight );
 }
 
