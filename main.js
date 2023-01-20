@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await new Promise(resolve => setTimeout(resolve, 15));
             if (i==43) i = 100;
         }
-        await LoadModel('./static/TreeV03/Tree.v03_1K.gltf',trans);
+        await LoadModel('./static/TreeV04/Tree.v03_1K.gltf',trans);
         // scene.add(arvore);
         CreateMaterials();
         for (let i = 43; i<100; i++){
