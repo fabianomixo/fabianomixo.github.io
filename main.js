@@ -2,7 +2,7 @@
 import * as THREE from '../../libs/three.js-r132/build/three.module.js';
 import {loadGLTF} from "./libs/loader.js";
 //import {GLTFLoader} from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
-import { Vector3 } from './libs/three.js-r132/build/three.module.js';
+import { Clock, Vector3 } from './libs/three.js-r132/build/three.module.js';
 import {ARButton} from '../../libs/three.js-r132/examples/jsm/webxr/ARButton.js';
 import { RGBELoader } from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
 //
@@ -12,7 +12,8 @@ let loaded = 0;
 let font;
 let materials;
 let textMesh1;
-
+let timer = 0;
+let time = new THREE.Clock(true);
 async function LoadModel(model,transform){
 
     // Loading GLTF
@@ -45,9 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
             await new Promise(resolve => setTimeout(resolve, 15));
             if (i==43) i = 100;
         }
-        await LoadModel('./static/TreeV03/TreeV03_Single.gltf',trans);
+        await LoadModel('./static/TreeV03/Tree.v03_1K.gltf',trans);
         // scene.add(arvore);
-
+        CreateMaterials();
         for (let i = 43; i<100; i++){
             text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
             await new Promise(resolve => setTimeout(resolve, 5));
@@ -65,8 +66,15 @@ document.addEventListener("DOMContentLoaded", () => {
         // text.textContent = "Iniciando Realidade Aumentada...";
         // await new Promise(resolve => setTimeout(resolve, 500));
         text.remove();
-
+        time.start();
         renderer.setAnimationLoop(() => {
+            time.getDelta();
+            if (time.elapsedTime - timer > 0.65) {
+                addGlitch();
+                timer = time.elapsedTime;
+                
+            }
+            //console.log(time.elapsedTime);
             renderer.render(scene, camera);
         });
 
@@ -97,7 +105,7 @@ function AddLight(scene){
         fog: false,
         depthWrite: false,
         });
-        //scene.background = texture;
+        scene.background = texture;
         scene.environment = texture;
     }); 
     const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
@@ -117,22 +125,9 @@ function GlitchEffect(a_children) {
 }
 
 function addGlitch() {
-    if (!loadedfbx) return;
-    if (meshBaseLine != null) {
-        for (let i = 0; i< meshBaseLine.children.length; i++) {
-            for (let j = 0; j< meshBaseLine.children[i].children.length; j++) {
-                if (meshBaseLine.children[i].children[j].children.length > 1){
-                    for (let k = 0; k< meshBaseLine.children[i].children[j].children.length; k++) {
-                        //let thisChildren = meshBaseLine.children[i].children[j].children[k];
-                        //GlitchEffect(thisChildren);
-                    }
-                }
-                let thisChildren = meshBaseLine.children[i].children[j];
-                GlitchEffect(thisChildren);
-            }
-            //let thisChildren = meshBaseLine.children[i];
-            //GlitchEffect(thisChildren);
-        }
+    for (let i = 0; i< arvore.children.length; i++) {
+        let thisChildren = arvore.children[i];
+        GlitchEffect(thisChildren);
     }
 }
 function MakeMaterial(a_children) {
@@ -152,4 +147,12 @@ function MakeMaterial(a_children) {
     //a_children.material.wireframeLinewidth = 10;
     //a_children.material.color.setHex(0x101010);
     a_children.material.side = THREE.DoubleSide;
+}
+
+function CreateMaterials(){
+    for (let i=0;i<arvore.children.length;i++){
+            // 0 - 283 -> Plane
+            // 284 - 939 -> Tree
+            MakeMaterial(arvore.children[i]);
+    }
 }
