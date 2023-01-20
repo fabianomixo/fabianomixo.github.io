@@ -104,3 +104,52 @@ function AddLight(scene){
     scene.add( directionalLight );
 }
 
+function GlitchEffect(a_children) {
+    let c = new THREE.Color( 'white' );//new THREE.Color( Math.random() * 0xffffff );//
+    if (Math.random(0, 1) > 0.25) {
+        a_children.material.wireframe = true;
+        //c = new THREE.Color( 'black' );
+    }
+    else {
+        a_children.material.wireframe = false;
+    }
+    a_children.material.color = c;
+}
+
+function addGlitch() {
+    if (!loadedfbx) return;
+    if (meshBaseLine != null) {
+        for (let i = 0; i< meshBaseLine.children.length; i++) {
+            for (let j = 0; j< meshBaseLine.children[i].children.length; j++) {
+                if (meshBaseLine.children[i].children[j].children.length > 1){
+                    for (let k = 0; k< meshBaseLine.children[i].children[j].children.length; k++) {
+                        //let thisChildren = meshBaseLine.children[i].children[j].children[k];
+                        //GlitchEffect(thisChildren);
+                    }
+                }
+                let thisChildren = meshBaseLine.children[i].children[j];
+                GlitchEffect(thisChildren);
+            }
+            //let thisChildren = meshBaseLine.children[i];
+            //GlitchEffect(thisChildren);
+        }
+    }
+}
+function MakeMaterial(a_children) {
+    //scaleFragment.push(a_children.scale);
+    //directionX.push(-1), directionY.push(-1), directionZ.push(-1);
+    if (a_children.material==null)a_children.material = new THREE.MeshBasicMaterial;
+    else
+        a_children.material = a_children.material.clone();
+    a_children.material.metalness = 0;
+    a_children.material.roughness = 0.1;
+    a_children.material.premultipliedAlpha = true;
+    //a_children.material.blending = THREE.AdditiveBlending;
+    //a_children.material.transparent = true;
+    //a_children.material.alphaTest = 0.5;
+    //a_children.material.wireframe = true;
+    //a_children.material.wireframeLinecap ="square";
+    //a_children.material.wireframeLinewidth = 10;
+    //a_children.material.color.setHex(0x101010);
+    a_children.material.side = THREE.DoubleSide;
+}
