@@ -14,6 +14,8 @@ let materials;
 let textMesh1;
 let timer = 0;
 let time = new THREE.Clock(true);
+let startindex = 656,endindex = 940,totalindex = 0;
+let camera;
 async function LoadModel(model,transform){
 
     // Loading GLTF
@@ -33,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
         //mockWithVideo("./static/mov/PVlow.mp4");
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         AddLight(scene);
         
         const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -44,15 +46,22 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let i =0; i<100; i++){
             text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
             await new Promise(resolve => setTimeout(resolve, 15));
-            if (i==43) i = 100;
+            if (i==50) i = 100;
         }
         await LoadModel('./static/TreeV04/Tree.v03_1K.gltf',trans);
         // scene.add(arvore);
-        CreateMaterials();
-        for (let i = 43; i<100; i++){
-            text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
-            await new Promise(resolve => setTimeout(resolve, 5));
+        totalindex = endindex-startindex;
+        console.log(totalindex); 
+        for (let i=startindex;i<endindex;i++){
+            // 0 - 283 -> Plane
+            // 284 - 939 -> Tree
+            text.textContent = "Aplicando Materiais: " + 50 + 50*(i/totalindex) + "%";
+            MakeMaterial(arvore.children[i]);
         }
+        // for (let i = 43; i<100; i++){
+        //     text.textContent = "Aplicando Materiais: " + (i+1) + "%";
+        //     await new Promise(resolve => setTimeout(resolve, 5));
+        // }
         
         // await new Promise(resolve => setTimeout(resolve, 500));
         // text.textContent = "Fabiano AR";
@@ -105,7 +114,7 @@ function AddLight(scene){
         fog: false,
         depthWrite: false,
         });
-        scene.background = texture;
+        //scene.background = texture;
         scene.environment = texture;
     }); 
     const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
@@ -125,9 +134,10 @@ function GlitchEffect(a_children) {
 }
 
 function addGlitch() {
-    for (let i = 0; i< arvore.children.length; i++) {
+    for (let i = startindex; i< endindex; i++) {
         let thisChildren = arvore.children[i];
         GlitchEffect(thisChildren);
+        thisChildren.lookAt(camera.position);
     }
 }
 function MakeMaterial(a_children) {
@@ -149,10 +159,3 @@ function MakeMaterial(a_children) {
     a_children.material.side = THREE.DoubleSide;
 }
 
-function CreateMaterials(){
-    for (let i=0;i<arvore.children.length;i++){
-            // 0 - 283 -> Plane
-            // 284 - 939 -> Tree
-            MakeMaterial(arvore.children[i]);
-    }
-}
