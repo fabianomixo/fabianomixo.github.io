@@ -2,20 +2,73 @@
 import * as THREE from '../../libs/three.js-r132/build/three.module.js';
 import {loadGLTF} from "./libs/loader.js";
 //import {GLTFLoader} from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
-import { Clock, Vector3 } from './libs/three.js-r132/build/three.module.js';
+import { Clock, MathUtils, Vector3 } from './libs/three.js-r132/build/three.module.js';
 import {ARButton} from '../../libs/three.js-r132/examples/jsm/webxr/ARButton.js';
 import { RGBELoader } from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
-//
+
+
+class Leaf {
+    constructor(mesh,movementRange){
+        this.mesh = mesh;
+        this.initialPos = new Vector3();
+        this.initialPos.copy(this.mesh.position);
+        //console.log(this.initialPos);
+        this.movementRange = movementRange; 
+    }
+
+    update(delta, wind){
+
+        let newpos = new Vector3();
+        newpos.copy(this.initialPos);
+        //console.log(newpos);
+        newpos.addScaledVector(wind,0.01*this.movementRange);
+        let dist = this.mesh.position.distanceTo(this.initialPos);
+        //console.log(dist);
+        if (dist< 0.05) {
+            this.mesh.position.lerp(newpos,0.001);
+            //console.log(dist);
+        }
+        
+        
+        //console.log(this.mesh.position);
+    }
+}
+class Wind {
+    constructor(maxWindForce){
+        this.direction = RandomDirection();
+        this.maxWindForce = maxWindForce;
+        console.log(this.direction);
+        console.log(this.maxWindForce);
+    }
+    update(){
+        //console.log(this.direction);
+        //wind.changeDirection(RandomDirection(this.direction));
+        this.windforce = this.direction.addScalar(MathUtils.randFloat(0,this.maxWindForce));
+        //console.log(this.windforce);
+    }
+    changeDirection(direction){
+        //console.log(direction);
+        this.direction = direction;
+    }
+}
+
 const trans = [0.01,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
-let arvore;
-let loaded = 0;
-let font;
-let materials;
-let textMesh1;
 let timer = 0;
 let time = new THREE.Clock(true);
-let startindex = 656,endindex = 940,totalindex = 0;
 let camera;
+let directionalLight;
+
+let wind = new Wind(0.01);
+let leafs = [];
+let arvore;
+let mesh_arvorebase;
+let mesh_cravos = [];
+let mesh_paubrasils = [];
+let mesh_ivys;
+let mesh_troncos = [];
+let mesh_groups = [];
+let timeline_running = false;
+let lightRotator = new THREE.Object3D();
 async function LoadModel(model,transform){
 
     // Loading GLTF
@@ -25,9 +78,28 @@ async function LoadModel(model,transform){
     arvore.rotation.copy(transform[1]);
     arvore.position.copy(transform[2]);
     console.log(arvore);
+
+    mesh_arvorebase = arvore.children[0];
+    mesh_troncos = mesh_arvorebase.children[0]; 
+    mesh_cravos = mesh_arvorebase.children[1]; 
+    mesh_paubrasils = mesh_arvorebase.children[2]; 
+    mesh_ivys = mesh_arvorebase.children[3]; 
+    mesh_groups = [mesh_troncos,mesh_cravos,mesh_paubrasils, mesh_ivys];
+
+    console.log(mesh_arvorebase);
+    console.log(mesh_troncos);
+    console.log(mesh_cravos);
+    console.log(mesh_paubrasils);
+    console.log(mesh_ivys);
+
+    mesh_arvorebase.visible = false;
+    mesh_groups.forEach(group => (group.children.forEach(child=>(child.visible = false))));
+    mesh_groups.forEach(group => (group.children.forEach(child=>(MakeMaterial(child)))));
+    MakeMaterial(mesh_arvorebase);
+
+
 }
 let text = document.getElementById("info");
-
 
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
@@ -46,43 +118,38 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let i =0; i<100; i++){
             text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
             await new Promise(resolve => setTimeout(resolve, 15));
-            if (i==50) i = 100;
+            if (i==93) i = 100;
         }
-        await LoadModel('./static/TreeV04/Tree.v03_1K.gltf',trans);
-        // scene.add(arvore);
-        totalindex = endindex-startindex;
-        console.log(totalindex); 
-        for (let i=startindex;i<endindex;i++){
-            // 0 - 283 -> Plane
-            // 284 - 939 -> Tree
-            text.textContent = "Aplicando Materiais: " + 50 + 50*(i/totalindex) + "%";
-            MakeMaterial(arvore.children[i]);
-        }
-        // for (let i = 43; i<100; i++){
-        //     text.textContent = "Aplicando Materiais: " + (i+1) + "%";
-        //     await new Promise(resolve => setTimeout(resolve, 5));
-        // }
+        await LoadModel('./static/TreeV07/tree.gltf',trans);
         
-        // await new Promise(resolve => setTimeout(resolve, 500));
-        // text.textContent = "Fabiano AR";
-        // await new Promise(resolve => setTimeout(resolve, 2500));
-        // text.textContent = "Iniciando Realidade Aumentada";
-        // await new Promise(resolve => setTimeout(resolve, 1000));
-        // text.textContent = "Iniciando Realidade Aumentada.";
-        // await new Promise(resolve => setTimeout(resolve, 500));
-        // text.textContent = "Iniciando Realidade Aumentada..";
-        // await new Promise(resolve => setTimeout(resolve, 500));
-        // text.textContent = "Iniciando Realidade Aumentada...";
-        // await new Promise(resolve => setTimeout(resolve, 500));
+
+        for (let i =93; i<100; i++){
+            text.textContent = "Aplicando materiais: " + (i+1) + "%";
+            await new Promise(resolve => setTimeout(resolve, 15));
+        }
+
         text.remove();
         time.start();
+        
         renderer.setAnimationLoop(() => {
-            time.getDelta();
-            if (time.elapsedTime - timer > 0.65) {
-                addGlitch();
+            wind.update();
+            leafs.forEach(leaf => leaf.update(time.getDelta(),wind.windforce));
+            //mesh_ivys.children.forEach(mesh => mesh.lookAt(camera.position));
+            //mesh_cravos.children.forEach(mesh => mesh.lookAt(camera.position));
+            //mesh_paubrasils.children.forEach(mesh => mesh.lookAt(camera.position));
+
+            lightRotator.position.copy(arvore.position);
+            lightRotator.rotation.y += time.getDelta();
+            directionalLight.target = arvore;
+
+            if (time.elapsedTime - timer > 3) {
+                wind.changeDirection(RandomDirection());
+
                 timer = time.elapsedTime;
-                
             }
+            
+
+
             //console.log(time.elapsedTime);
             renderer.render(scene, camera);
         });
@@ -96,7 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         controller.addEventListener('select', () => {
             scene.add(arvore);
             arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
-            //arvore.quaternion.setFromRotationMatrix(controller.matrixWorld);
+            leafs = [];
+            timeline_running = false;
+            Timeline();
         });
 
     }
@@ -117,45 +186,107 @@ function AddLight(scene){
         //scene.background = texture;
         scene.environment = texture;
     }); 
-    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-    scene.add( directionalLight );
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.castShadow = false;
+    directionalLight.position.set(3,3,2);
+    lightRotator.add(directionalLight);
+
+    // directionalLight.position.copy(camera.position);
+    // let direction = new Vector3();
+    // camera.getWorldDirection(direction);
+
+    scene.add( lightRotator );
 }
 
-function GlitchEffect(a_children) {
-    let c = new THREE.Color( 'white' );//new THREE.Color( Math.random() * 0xffffff );//
-    if (Math.random(0, 1) > 0.25) {
-        a_children.material.wireframe = true;
-        //c = new THREE.Color( 'black' );
-    }
-    else {
-        a_children.material.wireframe = false;
-    }
-    a_children.material.color = c;
+function SetGlitchEffect(a_children,active) {
+    //let c = new THREE.Color( 'white' );//new THREE.Color( Math.random() * 0xffffff );//
+    a_children.material.wireframe = active;
+    //a_children.material.color = c;
 }
 
-function addGlitch() {
-    for (let i = startindex; i< endindex; i++) {
-        let thisChildren = arvore.children[i];
-        GlitchEffect(thisChildren);
-        thisChildren.lookAt(camera.position);
-    }
-}
 function MakeMaterial(a_children) {
-    //scaleFragment.push(a_children.scale);
-    //directionX.push(-1), directionY.push(-1), directionZ.push(-1);
     if (a_children.material==null)a_children.material = new THREE.MeshBasicMaterial;
     else
         a_children.material = a_children.material.clone();
     a_children.material.metalness = 0;
     a_children.material.roughness = 0.1;
     a_children.material.premultipliedAlpha = true;
-    //a_children.material.blending = THREE.AdditiveBlending;
-    //a_children.material.transparent = true;
-    //a_children.material.alphaTest = 0.5;
-    //a_children.material.wireframe = true;
-    //a_children.material.wireframeLinecap ="square";
-    //a_children.material.wireframeLinewidth = 10;
-    //a_children.material.color.setHex(0x101010);
     a_children.material.side = THREE.DoubleSide;
 }
+
+function RandomDirection(){
+    let v3 = new Vector3(0,0,0);
+    const u = ( Math.random() - 0.5 ) * 2;
+    const t = Math.random() * Math.PI * 2;
+    const f = Math.sqrt( 1 - u ** 2 );
+
+    v3.x = f * Math.cos( t );
+    v3.y = f * Math.sin( t );
+    v3.z = u;
+
+    return v3;
+}
+
+async function ArrayAnimation(array,millis,isLeaf,isIn){
+    let length = array.length;
+    console.log(length);
+    for (let i=0;i<length;i++){
+        await MeshAnimation(array[i], millis, isLeaf, isIn);
+    }
+}
+
+async function MeshAnimation(mesh,millis,isLeaf,isIn){
+    mesh.visible = true;
+    let random = MathUtils.randInt(1,6);
+    let active = true;
+    for (let i=0; i<random;i++){
+        SetGlitchEffect(mesh,active);
+        await new Promise(resolve => setTimeout(resolve, millis));
+        active = !active;
+    }
+
+    
+    if (!isIn){
+        mesh.visible = false;
+        return;
+    }
+
+    if (!isLeaf) return;
+    let ran = MathUtils.randFloat(1,100);
+    leafs.push(new Leaf(mesh, ran));
+}
+
+async function Timeline(){
+    timeline_running = true;
+    mesh_arvorebase.visible = false;
+    mesh_groups.forEach(group => (group.children.forEach(child=>(child.visible = false))));
+    
+    await ArrayAnimation([mesh_arvorebase], 70, false , true);
+    await ArrayAnimation(mesh_troncos.children, 5, false, true);
+    await ArrayAnimation(mesh_ivys.children, 20, true, true);
+    await ArrayAnimation(mesh_cravos.children, 25, true, true);
+
+    await ArrayAnimation(mesh_cravos.children, 20, true, false);
+    await ArrayAnimation(mesh_ivys.children, 20, false, false);
+    await ArrayAnimation(mesh_troncos.children, 2, false, false);
+    await ArrayAnimation([mesh_arvorebase], 70, false , false);
+
+    await ArrayAnimation([mesh_arvorebase], 70, false , true);
+    await ArrayAnimation(mesh_troncos.children, 5, false, true);
+    await ArrayAnimation(mesh_ivys.children, 20, true, true);
+    await ArrayAnimation(mesh_paubrasils.children, 25, true, true);
+
+    await ArrayAnimation(mesh_paubrasils.children, 20, true, false);
+    await ArrayAnimation(mesh_ivys.children, 20, false, false);
+    await ArrayAnimation(mesh_troncos.children, 2, false, false);
+    await ArrayAnimation([mesh_arvorebase], 70, false , false);
+    
+    Timeline();
+}
+
+
+
+
+
+
 
