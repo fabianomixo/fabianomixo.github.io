@@ -5,7 +5,7 @@ import {loadGLTF} from "./libs/loader.js";
 import { Clock, MathUtils, Vector3 } from './libs/three.js-r132/build/three.module.js';
 import {ARButton} from '../../libs/three.js-r132/examples/jsm/webxr/ARButton.js';
 import { RGBELoader } from './libs/three.js-r132/examples/jsm/loaders/RGBELoader.js';
-
+import { GUI } from '../../libs/three.js-r132/examples/jsm/libs/dat.gui.module.js';
 
 class Leaf {
     constructor(mesh,movementRange){
@@ -69,19 +69,16 @@ let mesh_troncos = [];
 let mesh_groups = [];
 let timeline_running = false;
 let lightRotator = new THREE.Object3D();
+let cameraDir = new Vector3();
 let started = true;
 let text = document.getElementById("info");
 let guide = document.getElementById("guide");
-let debug = true;
-let switchDistance = false;
+let debug = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
         //mockWithImage();
         //mockWithVideo("./static/mov/PVlow.mp4");
-
-
-
 
         const scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
@@ -111,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
         text.remove();
         time.start();
         
+        guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
+
         renderer.setAnimationLoop(() => {
 
             if (renderer.xr.isPresenting){
@@ -126,14 +125,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     AddGlitch();
                     wind.changeDirection(RandomDirection());
                     timer = time.elapsedTime;
+                    reset = false;
                 }
 
-                if (started) {
-                    guide.textContent = '';
-                }
-                else {
-                    guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
-                }
+                // if (started) {
+                //     guide.textContent = '';
+                // }
+                // else {
+                    
+                // }
             }
             else {
                 started = false;
@@ -151,31 +151,26 @@ document.addEventListener("DOMContentLoaded", () => {
         const controller = renderer.xr.getController(0);
         scene.add(controller);
         controller.addEventListener('select', () => {
+            if (reset) return;
             started = true;
-            scene.add(arvore);
-            let pos = new Vector3();
-            let dir = new Vector3();
-            camera.getWorldDirection(dir);
-            pos.copy(camera.position);
-            let distance = 30;
-            let scale = 1;
-            if (debug && switchDistance){
-                distance = 2;
-                pos.add(new Vector3(0,-0.5,0))
-                scale = 0.175;
+
+            if (firstTime){
+                scene.add(arvore);
+                camera.getWorldDirection(cameraDir);
+                ColocarArvore(settings.Distancia);
+                arvore.position.y = settings.Altura;
+                if (!timeline_running)Timeline();
+                firstTime = false;
             }
-            arvore.scale.copy(new Vector3(scale,scale,scale));
-            pos.addScaledVector(dir,distance);
-            arvore.position.copy(pos);
-            switchDistance = !switchDistance;
+
             leafs = [];
-            if (!timeline_running)Timeline();
+            
         });
 
     }
     start();
 });
-
+let firstTime = true;
 async function LoadModel(model,transform){
 
     // Loading GLTF
@@ -207,6 +202,8 @@ async function LoadModel(model,transform){
     mesh_paubrasils.children.forEach(child=>(MakeMaterialNormal(child)));
     mesh_ivys.children.forEach(child=>(MakeMaterialNormal(child)));
     MakeMaterialMetal(mesh_arvorebase);
+
+    createPanel();
 }
 
 function AddLight(scene){
@@ -346,7 +343,7 @@ async function Timeline(){
 
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    Timeline();
+    await Timeline();
 }
 
 
@@ -385,7 +382,68 @@ async function TextAnimation(){
     text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
     await new Promise(resolve => setTimeout(resolve, 4000));
 }
+let settings;
+let reset;
 
+function createPanel() {
 
+    const panel = new GUI( { width: window.innerWidth - 100 } );
 
+    const folder1 = panel.addFolder( 'Ajustes Arvore' );
+    const folder2 = panel.addFolder( 'Modo' );
+
+    settings = {
+        'Resetar Pos': ResetarCameraDir,
+        'Tamanho': 1.0,
+        'Distancia': 30.0,
+        'Altura': 0.0,
+        'Modo Debug': false
+    };
+    folder1.add(settings, 'Resetar Pos');
+    folder1.add( settings, 'Tamanho', 0.05, 5, 0.005 ).listen().onChange(function ( tamanho ) {
+        if (debug) return;
+        arvore.scale.copy(new Vector3(tamanho,tamanho,tamanho));
+     });
+    folder1.add( settings, 'Distancia', 2, 40, 0.01 ).listen().onChange(function ( distancia ) {
+        if (debug) return;
+        ColocarArvore(distancia);
+     });
+    folder1.add( settings, 'Altura', -2.0, 2.0, 0.001 ).listen().onChange(function ( altura ) {
+        if (debug) return;
+        arvore.position.y = altura;
+    });
+    folder2.add( settings, 'Modo Debug').onChange( function (_debug){
+        debug = _debug;
+        console.log(settings);
+        if (_debug){
+            arvore.scale.copy(new Vector3(0.1,0.1,0.1));
+            ColocarArvore(1.5);
+        }
+        else {
+            arvore.scale.copy(new Vector3(settings.Tamanho,settings.Tamanho,settings.Tamanho));
+            ColocarArvore(settings.Distancia);
+            arvore.position.y = settings.Altura;
+        }
+    } );
+}
+
+function ColocarArvore(distancia){
+    let pos = new Vector3();
+    pos.copy(camera.position);
+    pos.addScaledVector(cameraDir,distancia);
+    arvore.position.copy(pos);
+    arvore.visible = true;
+    guide.textContent = '';
+}
+
+function ResetarCameraDir(){
+    arvore.visible = false;
+    firstTime = true;
+    guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
+    reset = true;
+    return;
+    camera.getWorldDirection(cameraDir);
+    ColocarArvore(settings.Distancia);
+    arvore.position.y = settings.Altura;
+}
 
