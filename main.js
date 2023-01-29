@@ -52,7 +52,7 @@ class Wind {
     }
 }
 
-const trans = [0.01,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
+const trans = [0.175,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
 let timer = 0;
 let time = new THREE.Clock(true);
 let camera;
@@ -94,10 +94,12 @@ async function LoadModel(model,transform){
 
     mesh_arvorebase.visible = false;
     mesh_groups.forEach(group => (group.children.forEach(child=>(child.visible = false))));
-    mesh_groups.forEach(group => (group.children.forEach(child=>(MakeMaterial(child)))));
-    MakeMaterial(mesh_arvorebase);
-
-
+    // mesh_groups.forEach(group => (group.children.forEach(child=>(MakeMaterial(child)))));
+    mesh_troncos.children.forEach(child=>(MakeMaterialMetal(child)));
+    mesh_cravos.children.forEach(child=>(MakeMaterialNormal(child)));
+    mesh_paubrasils.children.forEach(child=>(MakeMaterialNormal(child)));
+    mesh_ivys.children.forEach(child=>(MakeMaterialNormal(child)));
+    MakeMaterialMetal(mesh_arvorebase);
 }
 let text = document.getElementById("info");
 
@@ -139,12 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
             //mesh_paubrasils.children.forEach(mesh => mesh.lookAt(camera.position));
 
             lightRotator.position.copy(arvore.position);
-            lightRotator.rotation.y += time.getDelta();
+            lightRotator.rotation.y = time.getElapsedTime()*0.4;
+            //console.log(lightRotator.rotation.y);
             directionalLight.target = arvore;
 
-            if (time.elapsedTime - timer > 3) {
+            if (time.elapsedTime - timer > 2) {
+                AddGlitch();
                 wind.changeDirection(RandomDirection());
-
                 timer = time.elapsedTime;
             }
             
@@ -155,6 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const arButton = ARButton.createButton(renderer, {optionalFeatures: ['dom-overlay'], domOverlay: {root: document.body}});
+        arButton.textContent = "Iniciar";
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
 
@@ -162,10 +166,18 @@ document.addEventListener("DOMContentLoaded", () => {
         scene.add(controller);
         controller.addEventListener('select', () => {
             scene.add(arvore);
-            arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
+            let pos = new Vector3();
+            let dir = new Vector3();
+            camera.getWorldDirection(dir);
+            pos.copy(camera.position);
+            pos.addScaledVector(dir,1.5);
+            pos.add(new Vector3(0,-0.5,0))
+            console.log(pos);
+            arvore.position.copy(pos);
+            //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
             leafs = [];
-            timeline_running = false;
-            Timeline();
+
+            if (!timeline_running)Timeline();
         });
 
     }
@@ -189,6 +201,7 @@ function AddLight(scene){
     directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
     directionalLight.castShadow = false;
     directionalLight.position.set(3,3,2);
+    directionalLight.intensity = 1.1;
     lightRotator.add(directionalLight);
 
     // directionalLight.position.copy(camera.position);
@@ -198,13 +211,29 @@ function AddLight(scene){
     scene.add( lightRotator );
 }
 
+function AddGlitch(){
+    mesh_ivys.children.forEach(mesh => oldGlitchEffect(mesh));
+    mesh_cravos.children.forEach(mesh => oldGlitchEffect(mesh));
+    mesh_paubrasils.children.forEach(mesh => oldGlitchEffect(mesh));
+}
+
 function SetGlitchEffect(a_children,active) {
     //let c = new THREE.Color( 'white' );//new THREE.Color( Math.random() * 0xffffff );//
     a_children.material.wireframe = active;
     //a_children.material.color = c;
 }
 
-function MakeMaterial(a_children) {
+function MakeMaterialMetal(a_children) {
+    if (a_children.material==null)a_children.material = new THREE.MeshBasicMaterial;
+    else
+        a_children.material = a_children.material.clone();
+    a_children.material.metalness = 0.5;
+    a_children.material.roughness = 0.75;
+    a_children.material.premultipliedAlpha = true;
+    a_children.material.side = THREE.DoubleSide;
+}
+
+function MakeMaterialNormal(a_children) {
     if (a_children.material==null)a_children.material = new THREE.MeshBasicMaterial;
     else
         a_children.material = a_children.material.clone();
@@ -227,8 +256,10 @@ function RandomDirection(){
     return v3;
 }
 
-async function ArrayAnimation(array,millis,isLeaf,isIn){
+async function ArrayAnimation(array,millis,isLeaf,isIn, cut = 0){
     let length = array.length;
+    console.log(length);
+    if (cut>0) length = length*cut;
     console.log(length);
     for (let i=0;i<length;i++){
         await MeshAnimation(array[i], millis, isLeaf, isIn);
@@ -245,6 +276,9 @@ async function MeshAnimation(mesh,millis,isLeaf,isIn){
         active = !active;
     }
 
+    if (!isLeaf) {
+        SetGlitchEffect(mesh,false);
+    }
     
     if (!isIn){
         mesh.visible = false;
@@ -261,31 +295,47 @@ async function Timeline(){
     mesh_arvorebase.visible = false;
     mesh_groups.forEach(group => (group.children.forEach(child=>(child.visible = false))));
     
-    await ArrayAnimation([mesh_arvorebase], 70, false , true);
-    await ArrayAnimation(mesh_troncos.children, 5, false, true);
-    await ArrayAnimation(mesh_ivys.children, 20, true, true);
-    await ArrayAnimation(mesh_cravos.children, 25, true, true);
+    await ArrayAnimation([mesh_arvorebase], 50, false , true);
+    await ArrayAnimation(mesh_troncos.children, 10, false, true);
+    await ArrayAnimation(mesh_ivys.children, 10, true, true);
+    await ArrayAnimation(mesh_cravos.children, 3.5, true, true);
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    await ArrayAnimation(mesh_cravos.children, 20, true, false);
-    await ArrayAnimation(mesh_ivys.children, 20, false, false);
+    await ArrayAnimation(mesh_cravos.children, 1, true, false);
+    await ArrayAnimation(mesh_ivys.children, 1, false, false);
+    await ArrayAnimation(mesh_troncos.children, 1, false, false, 0.8);
+    //await ArrayAnimation([mesh_arvorebase], 1, false , false);
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    //await ArrayAnimation([mesh_arvorebase], 100, false , true);
+    await ArrayAnimation(mesh_troncos.children, 6, false, true);
+    //await ArrayAnimation(mesh_ivys.children, 20, true, true);
+    await ArrayAnimation(mesh_paubrasils.children, 5, true, true);
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    await ArrayAnimation(mesh_paubrasils.children, 1, true, false);
+    //await ArrayAnimation(mesh_ivys.children, 20, false, false);
     await ArrayAnimation(mesh_troncos.children, 2, false, false);
     await ArrayAnimation([mesh_arvorebase], 70, false , false);
 
-    await ArrayAnimation([mesh_arvorebase], 70, false , true);
-    await ArrayAnimation(mesh_troncos.children, 5, false, true);
-    await ArrayAnimation(mesh_ivys.children, 20, true, true);
-    await ArrayAnimation(mesh_paubrasils.children, 25, true, true);
-
-    await ArrayAnimation(mesh_paubrasils.children, 20, true, false);
-    await ArrayAnimation(mesh_ivys.children, 20, false, false);
-    await ArrayAnimation(mesh_troncos.children, 2, false, false);
-    await ArrayAnimation([mesh_arvorebase], 70, false , false);
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     Timeline();
 }
 
 
+function oldGlitchEffect(a_children) {
+    if (!a_children.visible) return;
 
+    if (Math.random(0, 1) > 0.25) {
+        a_children.material.wireframe = true;
+        //c = new THREE.Color( 'black' );
+    }
+    else {
+        a_children.material.wireframe = false;
+    }
+}
 
 
 
