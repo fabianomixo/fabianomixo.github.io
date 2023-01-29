@@ -72,6 +72,8 @@ let lightRotator = new THREE.Object3D();
 let started = true;
 let text = document.getElementById("info");
 let guide = document.getElementById("guide");
+let debug = true;
+let switchDistance = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
@@ -104,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         await LoadModel('./static/TreeV07/tree.gltf',trans);
 
-        await TextAnimation();
+        //await TextAnimation();
 
         text.remove();
         time.start();
@@ -155,11 +157,17 @@ document.addEventListener("DOMContentLoaded", () => {
             let dir = new Vector3();
             camera.getWorldDirection(dir);
             pos.copy(camera.position);
-            pos.addScaledVector(dir,30);
-            //pos.add(new Vector3(0,-0.5,0))
-            console.log(pos);
+            let distance = 30;
+            let scale = 1;
+            if (debug && switchDistance){
+                distance = 2;
+                pos.add(new Vector3(0,-0.5,0))
+                scale = 0.175;
+            }
+            arvore.scale.copy(new Vector3(scale,scale,scale));
+            pos.addScaledVector(dir,distance);
             arvore.position.copy(pos);
-            //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
+            switchDistance = !switchDistance;
             leafs = [];
             if (!timeline_running)Timeline();
         });
