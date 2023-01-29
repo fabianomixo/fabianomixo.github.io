@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         await LoadModel('./static/TreeV07/tree.gltf',trans);
 
-        //await TextAnimation();
+        await TextAnimation();
 
         text.remove();
         time.start();
