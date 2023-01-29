@@ -69,6 +69,104 @@ let mesh_troncos = [];
 let mesh_groups = [];
 let timeline_running = false;
 let lightRotator = new THREE.Object3D();
+let started = true;
+let text = document.getElementById("info");
+let guide = document.getElementById("guide");
+
+document.addEventListener("DOMContentLoaded", () => {
+    const start = async () => {
+        //mockWithImage();
+        //mockWithVideo("./static/mov/PVlow.mp4");
+
+
+
+
+        const scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        AddLight(scene);
+        
+        const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+
+        text.setAttribute('style', 'white-space: pre;');
+        
+        guide.setAttribute('style', 'white-space: pre;');
+
+
+        
+        for (let i =0; i<100; i++){
+            text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
+            await new Promise(resolve => setTimeout(resolve, 15));
+            if (i==93) i = 100;
+        }
+        await LoadModel('./static/TreeV07/tree.gltf',trans);
+
+        //await TextAnimation();
+
+        text.remove();
+        time.start();
+        
+        renderer.setAnimationLoop(() => {
+
+            if (renderer.xr.isPresenting){
+                wind.update();
+                leafs.forEach(leaf => leaf.update(time.getDelta(),wind.windforce));
+    
+                lightRotator.position.copy(arvore.position);
+                lightRotator.rotation.y = time.getElapsedTime()*0.4;
+                directionalLight.target = arvore;
+                //arvore.rotation.y = -time.getElapsedTime()*0.1;
+                
+                if (time.elapsedTime - timer > 2) {
+                    AddGlitch();
+                    wind.changeDirection(RandomDirection());
+                    timer = time.elapsedTime;
+                }
+
+                if (started) {
+                    guide.textContent = '';
+                }
+                else {
+                    guide.textContent = 'Para iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n__________________________________________________\r\n\r\n__________________________________________________';
+                }
+            }
+            else {
+                started = false;
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        const arButton = ARButton.createButton(renderer, {optionalFeatures: ['dom-overlay'], domOverlay: {root: document.body}});
+
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(arButton);
+        
+
+        const controller = renderer.xr.getController(0);
+        scene.add(controller);
+        controller.addEventListener('select', () => {
+            started = true;
+            scene.add(arvore);
+            let pos = new Vector3();
+            let dir = new Vector3();
+            camera.getWorldDirection(dir);
+            pos.copy(camera.position);
+            pos.addScaledVector(dir,2);
+            pos.add(new Vector3(0,-0.5,0))
+            console.log(pos);
+            arvore.position.copy(pos);
+            //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
+            leafs = [];
+            if (!timeline_running)Timeline();
+        });
+
+    }
+    start();
+});
+
 async function LoadModel(model,transform){
 
     // Loading GLTF
@@ -101,82 +199,6 @@ async function LoadModel(model,transform){
     mesh_ivys.children.forEach(child=>(MakeMaterialNormal(child)));
     MakeMaterialMetal(mesh_arvorebase);
 }
-let text = document.getElementById("info");
-
-document.addEventListener("DOMContentLoaded", () => {
-    const start = async () => {
-        //mockWithImage();
-        //mockWithVideo("./static/mov/PVlow.mp4");
-
-        const scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-        AddLight(scene);
-        
-        const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-
-        text.setAttribute('style', 'white-space: pre;');
-
-        for (let i =0; i<100; i++){
-            text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
-            await new Promise(resolve => setTimeout(resolve, 15));
-            if (i==93) i = 100;
-        }
-        await LoadModel('./static/TreeV07/tree.gltf',trans);
-        for (let i =93; i<100; i++){
-            text.textContent = "Aplicando materiais: " + (i+1) + "%";
-            await new Promise(resolve => setTimeout(resolve, 150));
-        }
-        await TextAnimation();
-
-        text.remove();
-        time.start();
-        
-        renderer.setAnimationLoop(() => {
-            wind.update();
-            leafs.forEach(leaf => leaf.update(time.getDelta(),wind.windforce));
-
-            lightRotator.position.copy(arvore.position);
-            lightRotator.rotation.y = time.getElapsedTime()*0.4;
-
-            directionalLight.target = arvore;
-
-            if (time.elapsedTime - timer > 2) {
-                AddGlitch();
-                wind.changeDirection(RandomDirection());
-                timer = time.elapsedTime;
-            }
-
-            renderer.render(scene, camera);
-        });
-
-        const arButton = ARButton.createButton(renderer, {optionalFeatures: ['dom-overlay'], domOverlay: {root: document.body}});
-        arButton.textContent = "Iniciar";
-        document.body.appendChild(renderer.domElement);
-        document.body.appendChild(arButton);
-
-        const controller = renderer.xr.getController(0);
-        scene.add(controller);
-        controller.addEventListener('select', () => {
-            scene.add(arvore);
-            let pos = new Vector3();
-            let dir = new Vector3();
-            camera.getWorldDirection(dir);
-            pos.copy(camera.position);
-            pos.addScaledVector(dir,1.5);
-            pos.add(new Vector3(0,-0.5,0))
-            console.log(pos);
-            arvore.position.copy(pos);
-            //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
-            leafs = [];
-            if (!timeline_running)Timeline();
-        });
-
-    }
-    start();
-});
 
 function AddLight(scene){
     new RGBELoader()
@@ -332,6 +354,11 @@ function oldGlitchEffect(a_children) {
 }
 
 async function TextAnimation(){
+    for (let i =93; i<100; i++){
+        text.textContent = "Aplicando materiais: " + (i+1) + "%";
+        await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
     text.textContent = "Iniciando";
     await new Promise(resolve => setTimeout(resolve, 300));
     text.textContent = "Iniciando.";
