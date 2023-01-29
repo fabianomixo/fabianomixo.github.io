@@ -65,7 +65,7 @@ class ARButton {
 
 				currentSession.removeEventListener( 'end', onSessionEnded );
 
-				button.textContent = 'INICIAR';
+				button.textContent = 'ENTRAR';
 				sessionInit.domOverlay.root.style.display = 'none';
 
 				currentSession = null;
@@ -80,7 +80,7 @@ class ARButton {
 			button.style.left = 'calc(50% - 50px)';
 			button.style.width = '100px';
 
-			button.textContent = 'INICIAR';
+			button.textContent = 'ENTRAR';
 
 			button.onmouseenter = function () {
 
@@ -168,16 +168,16 @@ class ARButton {
 		} else {
 
 			const message = document.createElement( 'a' );
-
+			button.textContent = 'Install WebXR Viewer';
 			if ( window.isSecureContext === false ) {
 
 				message.href = document.location.href.replace( /^http:/, 'https:' );
-				message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
+				message.innerHTML = 'iOS needs WebXR Viewer'; // TODO Improve message
 
 			} else {
 
-				message.href = 'https://immersiveweb.dev/';
-				message.innerHTML = 'WEBXR NOT AVAILABLE';
+				message.href = 'https://apps.apple.com/us/app/webxr-viewer/id1295998056';
+				message.innerHTML = 'iOS needs WebXR Viewer';
 
 			}
 

@@ -117,18 +117,19 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.xr.enabled = true;
 
+        text.setAttribute('style', 'white-space: pre;');
+
         for (let i =0; i<100; i++){
             text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
             await new Promise(resolve => setTimeout(resolve, 15));
             if (i==93) i = 100;
         }
         await LoadModel('./static/TreeV07/tree.gltf',trans);
-        
-
         for (let i =93; i<100; i++){
             text.textContent = "Aplicando materiais: " + (i+1) + "%";
-            await new Promise(resolve => setTimeout(resolve, 15));
+            await new Promise(resolve => setTimeout(resolve, 150));
         }
+        await TextAnimation();
 
         text.remove();
         time.start();
@@ -136,13 +137,10 @@ document.addEventListener("DOMContentLoaded", () => {
         renderer.setAnimationLoop(() => {
             wind.update();
             leafs.forEach(leaf => leaf.update(time.getDelta(),wind.windforce));
-            //mesh_ivys.children.forEach(mesh => mesh.lookAt(camera.position));
-            //mesh_cravos.children.forEach(mesh => mesh.lookAt(camera.position));
-            //mesh_paubrasils.children.forEach(mesh => mesh.lookAt(camera.position));
 
             lightRotator.position.copy(arvore.position);
             lightRotator.rotation.y = time.getElapsedTime()*0.4;
-            //console.log(lightRotator.rotation.y);
+
             directionalLight.target = arvore;
 
             if (time.elapsedTime - timer > 2) {
@@ -150,10 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 wind.changeDirection(RandomDirection());
                 timer = time.elapsedTime;
             }
-            
 
-
-            //console.log(time.elapsedTime);
             renderer.render(scene, camera);
         });
 
@@ -176,7 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
             arvore.position.copy(pos);
             //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
             leafs = [];
-
             if (!timeline_running)Timeline();
         });
 
@@ -335,6 +329,25 @@ function oldGlitchEffect(a_children) {
     else {
         a_children.material.wireframe = false;
     }
+}
+
+async function TextAnimation(){
+    text.textContent = "Iniciando";
+    await new Promise(resolve => setTimeout(resolve, 300));
+    text.textContent = "Iniciando.";
+    await new Promise(resolve => setTimeout(resolve, 300));
+    text.textContent = "Iniciando..";
+    await new Promise(resolve => setTimeout(resolve, 300));
+    text.textContent = "Iniciando...";
+    await new Promise(resolve => setTimeout(resolve, 800));
+    text.textContent = "";
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    text.textContent = "O Museu do Amanhã \r\n\r\napresenta";
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
+    await new Promise(resolve => setTimeout(resolve, 4000));
 }
 
 
