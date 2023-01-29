@@ -52,7 +52,7 @@ class Wind {
     }
 }
 
-const trans = [0.175,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
+const trans = [/*0.175*/1,new THREE.Euler(0,0,0),new Vector3(0,0,0)];
 let timer = 0;
 let time = new THREE.Clock(true);
 let camera;
@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        camera.far = 20000;
         AddLight(scene);
         
         const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -129,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     guide.textContent = '';
                 }
                 else {
-                    guide.textContent = 'Para iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n__________________________________________________\r\n\r\n__________________________________________________';
+                    guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
                 }
             }
             else {
@@ -154,8 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
             let dir = new Vector3();
             camera.getWorldDirection(dir);
             pos.copy(camera.position);
-            pos.addScaledVector(dir,2);
-            pos.add(new Vector3(0,-0.5,0))
+            pos.addScaledVector(dir,30);
+            //pos.add(new Vector3(0,-0.5,0))
             console.log(pos);
             arvore.position.copy(pos);
             //arvore.position.set( 0, 0, 0 ).applyMatrix4(controller.matrixWorld); 
