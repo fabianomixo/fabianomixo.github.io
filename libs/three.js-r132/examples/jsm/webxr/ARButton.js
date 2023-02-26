@@ -107,6 +107,7 @@ class ARButton {
 				}
 
 			};
+			
 
 		}
 

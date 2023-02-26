@@ -73,18 +73,22 @@ let cameraDir = new Vector3();
 let started = true;
 let text = document.getElementById("info");
 let guide = document.getElementById("guide");
+let imgguide = document.getElementById("alinhamento");
 let debug = false;
+const instrucoes = "\n\n\n\n\n\n\n\n\n\n\n\nPara ver a obra, encaixe o\nespelho d'água e toque na tela";
 
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
         //mockWithImage();
         //mockWithVideo("./static/mov/PVlow.mp4");
-
+        VisibilidadeGuide(false);
         const scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
         camera.far = 20000;
         AddLight(scene);
         
+
+
         const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -93,8 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
         text.setAttribute('style', 'white-space: pre;');
         
         guide.setAttribute('style', 'white-space: pre;');
-
-
+        
+        
         
         for (let i =0; i<100; i++){
             text.textContent = "Baixando Objetos 3D: " + (i+1) + "%";
@@ -108,11 +112,18 @@ document.addEventListener("DOMContentLoaded", () => {
         text.remove();
         time.start();
         
-        guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
+        guide.textContent = "Clique no botão ENTRAR\npara iniciar a câmera";
+
+        let doonce = false;
 
         renderer.setAnimationLoop(() => {
 
             if (renderer.xr.isPresenting){
+                if (!doonce){
+                    guide.textContent = instrucoes;
+                    VisibilidadeGuide(true);
+                    doonce = true;
+                }
                 wind.update();
                 leafs.forEach(leaf => leaf.update(time.getDelta(),wind.windforce));
     
@@ -143,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const arButton = ARButton.createButton(renderer, {optionalFeatures: ['dom-overlay'], domOverlay: {root: document.body}});
+        
 
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(arButton);
@@ -365,18 +377,20 @@ async function TextAnimation(){
         await new Promise(resolve => setTimeout(resolve, 150));
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
-    text.textContent = "Iniciando";
+    text.textContent = "Iniciando   ";
     await new Promise(resolve => setTimeout(resolve, 300));
-    text.textContent = "Iniciando.";
+    text.textContent = "Iniciando.  ";
     await new Promise(resolve => setTimeout(resolve, 300));
-    text.textContent = "Iniciando..";
+    text.textContent = "Iniciando.. ";
     await new Promise(resolve => setTimeout(resolve, 300));
     text.textContent = "Iniciando...";
     await new Promise(resolve => setTimeout(resolve, 800));
     text.textContent = "";
     await new Promise(resolve => setTimeout(resolve, 1000));
-    text.textContent = "O Museu do Amanhã \r\n\r\napresenta";
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    text.textContent = "Galeria Invisível do Amanhã \r\n\r\nMuseu do Amanhã";
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    text.textContent = "apresenta";
+    await new Promise(resolve => setTimeout(resolve, 3000));
     text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
     await new Promise(resolve => setTimeout(resolve, 4000));
     text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
@@ -395,7 +409,7 @@ function createPanel() {
     settings = {
         'Resetar Pos': ResetarCameraDir,
         'Tamanho': 1.0,
-        'Distancia': 30.0,
+        'Distancia': 15.75,
         'Altura': 0.0,
         'Modo Debug': false
     };
@@ -430,20 +444,32 @@ function createPanel() {
 function ColocarArvore(distancia){
     let pos = new Vector3();
     pos.copy(camera.position);
+    pos.y = 0;
     pos.addScaledVector(cameraDir,distancia);
     arvore.position.copy(pos);
     arvore.visible = true;
     guide.textContent = '';
+    VisibilidadeGuide(false);
 }
 
 function ResetarCameraDir(){
     arvore.visible = false;
     firstTime = true;
-    guide.textContent = '__________________________________________________\r\nPara iniciar a experiência,\r\n alinhe o chafariz entre as barras\r\ne toque na tela\r\n__________________________________________________';
+    VisibilidadeGuide(true);
+    guide.textContent = instrucoes;
     reset = true;
     return;
     camera.getWorldDirection(cameraDir);
     ColocarArvore(settings.Distancia);
     arvore.position.y = settings.Altura;
+}
+
+function VisibilidadeGuide(visivel){
+    if (visivel){
+        imgguide.style.display = 'block';
+    }
+    else {
+        imgguide.style.display = 'none';
+    }
 }
 
