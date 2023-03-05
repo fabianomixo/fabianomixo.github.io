@@ -75,7 +75,7 @@ let text = document.getElementById("info");
 let guide = document.getElementById("guide");
 let imgguide = document.getElementById("alinhamento");
 let debug = false;
-const instrucoes = "\n\n\n\n\n\n\n\n\n\n\n\nPara ver a obra, encaixe o\nespelho d'água e toque na tela";
+const instrucoes = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPara ver a obra, encaixe o\nespelho d'água e toque na tela";
 
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
@@ -388,13 +388,13 @@ async function TextAnimation(){
     text.textContent = "";
     await new Promise(resolve => setTimeout(resolve, 1000));
     text.textContent = "Galeria Invisível do Amanhã \r\n\r\nMuseu do Amanhã";
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    text.textContent = "apresenta";
     await new Promise(resolve => setTimeout(resolve, 3000));
+    text.textContent = "apresenta";
+    await new Promise(resolve => setTimeout(resolve, 2000));
     text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    await new Promise(resolve => setTimeout(resolve, 2500));
     text.textContent = "MEMÓRIA DE IBIRÁ\r\n\r\nde Fabiano Mixo";
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    await new Promise(resolve => setTimeout(resolve, 2500));
 }
 let settings;
 let reset;
@@ -409,8 +409,8 @@ function createPanel() {
     settings = {
         'Resetar Pos': ResetarCameraDir,
         'Tamanho': 1.0,
-        'Distancia': 15.75,
-        'Altura': 0.0,
+        'Distancia': 19.9, //15.75,
+        'Altura': -1.5,
         'Modo Debug': false
     };
     folder1.add(settings, 'Resetar Pos');
