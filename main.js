@@ -76,7 +76,7 @@ let guide = document.getElementById("guide");
 let imgguide = document.getElementById("alinhamento");
 let debug = false;
 const instrucoes = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPara ver a obra, encaixe o\nespelho d'água e toque na tela";
-
+let panel;
 document.addEventListener("DOMContentLoaded", () => {
     const start = async () => {
         //mockWithImage();
@@ -216,6 +216,7 @@ async function LoadModel(model,transform){
     MakeMaterialMetal(mesh_arvorebase);
 
     createPanel();
+    panel.hide();
 }
 
 function AddLight(scene){
@@ -401,7 +402,7 @@ let reset;
 
 function createPanel() {
 
-    const panel = new GUI( { width: window.innerWidth - 100 } );
+    panel = new GUI( { width: window.innerWidth - 100 } );
 
     const folder1 = panel.addFolder( 'Ajustes Arvore' );
     const folder2 = panel.addFolder( 'Modo' );
