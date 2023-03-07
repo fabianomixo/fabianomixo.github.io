@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         text.remove();
         time.start();
         
-        guide.textContent = "Clique no botão ENTRAR\npara iniciar a câmera";
+        guide.textContent = "Clique no botão ENTRAR\npara iniciar a experiência \n\nSe necessário, baixe o app\nindicado no botão (WebXR Viewer)\ne siga os passos:\n1) inicie o aplicativo WebXR Viewer\n2) clique na barra de endereço superior\n3) clique no ícone de QR Code\n4) aponte para o QR Code no chão";
 
         let doonce = false;
 
